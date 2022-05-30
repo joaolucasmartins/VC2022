@@ -148,3 +148,30 @@ class ModelTrainer:
         print("Finished")
 
         return train_history, val_history
+
+    def visualize_model(self, val_dataloader, classes, num_images=6): # Adapted from https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+        was_training = self.model.training
+        self.model.eval()
+        images_so_far = 0
+        fig = plt.figure()
+
+        with torch.no_grad():
+            for i, (inputs, labels) in enumerate(val_dataloader):
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                outputs = self.model(inputs)
+                _, preds = torch.max(outputs, 1)
+
+                for j in range(inputs.size()[0]):
+                    images_so_far += 1
+                    ax = plt.subplot(num_images//2, 2, images_so_far)
+                    ax.axis('off')
+                    class_names = list(classes.keys())
+                    ax.set_title(f'predicted: {class_names[preds[j]]}')
+                    cv.imshow(inputs.cpu().data[j])
+
+                    if images_so_far == num_images:
+                        self.model.train(mode=was_training)
+                        return
+            self.model.train(mode=was_training)
