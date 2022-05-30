@@ -149,6 +149,14 @@ class ModelTrainer:
 
         return train_history, val_history
 
+    def freeze_layers(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+    def unfreeze_layers(self):
+        for param in self.model.parameters():
+            param.requires_grad = True
+
     def visualize_model(self, val_dataloader, classes, num_images=6): # Adapted from https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
         was_training = self.model.training
         self.model.eval()
