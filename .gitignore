@@ -1,4 +1,5 @@
-dataset/*
+dataset
+yolov5
 results.csv
 *.pth
 
