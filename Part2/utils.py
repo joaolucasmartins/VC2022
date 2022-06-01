@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from sklearn.metrics import accuracy_score
+import json
 
 # Dataset functions
 
@@ -48,12 +49,10 @@ def plotTrainingHistory(train_history, val_history):
 
 class ModelTrainer:
     def __init__(self, *args):
-        print(args)
         if len(args) == 5:
             model, model_name, loss, optimizer, device = args
         elif len(args) == 2:
             ks = ["model", "name", "num_epochs", "loss", "optimizer"]
-            print([args[0][k] for k in ks])
             model, model_name, num_epochs, loss, optimizer = [args[0][k] for k in ks]
             device = args[1]
 
@@ -63,6 +62,19 @@ class ModelTrainer:
         self.loss = loss
         self.optimizer = optimizer
         self.device = device
+
+    def predict_data(self, data):
+        print("Predicting data")
+        preds = []
+        actuals = []
+        with torch.set_grad_enabled(False):
+            for _, (X, y) in enumerate(tqdm(data)):
+                pred = self.model(X)
+                probs = F.softmax(pred, dim=1)
+                final_pred = torch.argmax(probs, dim=1)
+                preds.extend(final_pred)
+                actuals.extend(y)
+        return torch.stack(preds, dim=0), torch.stack(actuals, dim=0)
 
     def _epoch_iter(self, dataloader, is_train):
         if is_train:
@@ -103,8 +115,31 @@ class ModelTrainer:
                 labels.extend(y.cpu().numpy())
 
         return total_loss / num_batches, accuracy_score(labels, preds)
+    
+    def _save_model(self, t, file_name):
+        save_dict = {'model': self.model.state_dict(), 'optimizer': self.optimizer.state_dict(), 'epoch': t}
+        torch.save(save_dict, self.model_name + f'_{ file_name }.pth')
 
-    def train(self, train_dataloader, validation_dataloader):
+    def train(self, train_dataloader, validation_dataloader, force_load_model=True):
+        from os.path import exists
+        file_exists = exists(self.model_name + '_latest_model.pth')
+        if file_exists:
+            if not force_load_model:
+                print("File already exists do you wish to overwrite (Y/N)?")
+                ans = input()
+            if force_load_model or not (ans == 'Y' or ans == 'y'):
+                # Load model and display previous results
+                dic = torch.load(self.model_name + '_best_model.pth')
+                self.model.load_state_dict(dic['model'])
+                print(f"Loaded { self.model_name } obtained in epoch { dic['epoch'] }")
+                self.model.eval()
+                with open(self.model_name + '_train_history.json', 'r') as f:
+                    train_history = json.load(f)
+                with open(self.model_name + '_val_history.json', 'r') as f:
+                    val_history = json.load(f)
+                return train_history, val_history
+
+
         train_history = {'loss': [], 'accuracy': []}
         val_history = {'loss': [], 'accuracy': []}
         best_val_loss = np.inf
@@ -125,18 +160,10 @@ class ModelTrainer:
             # Save model when validation loss improves
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                save_dict = {'model': self.model.state_dict(
-                ), 'optimizer': self.optimizer.state_dict(), 'epoch': t}
-                torch.save(save_dict, self.model_name + '_best_model.pth')
+                self._save_model(t, 'best_model')
 
             # Save latest model
-            save_dict = {
-                'model': self.model.state_dict(), 
-                'optimizer': self.optimizer.state_dict(), 
-                'epoch': t
-            }
-            
-            torch.save(save_dict, self.model_name + '_latest_model.pth')
+            self._save_model(t, 'best_model')
 
             # save training history for plotting purposes
             train_history["loss"].append(train_loss)
@@ -146,6 +173,11 @@ class ModelTrainer:
             val_history["accuracy"].append(val_acc)
 
         print("Finished")
+        with open(self.model_name + '_train_history.json', 'w') as f:
+            f.write(json.dumps(train_history))
+
+        with open(self.model_name + '_val_history.json', 'w') as f:
+            f.write(json.dumps(val_history))
 
         return train_history, val_history
 
@@ -156,6 +188,9 @@ class ModelTrainer:
     def unfreeze_layers(self):
         for param in self.model.parameters():
             param.requires_grad = True
+
+    def unfreeze_fc(self):
+        self.model.fc.weight.requires_grad = True
 
     def visualize_model(self, val_dataloader, classes, num_images=6): # Adapted from https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
         was_training = self.model.training
