@@ -1,7 +1,11 @@
 dataset
 yolov5
 results.csv
+# Saved models
 *.pth
+
+# Output model histories
+*_history.json
 
 # Python gitignore Template bellow
 
