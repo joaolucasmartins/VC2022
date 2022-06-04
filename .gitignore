@@ -4,9 +4,6 @@ results.csv
 # Saved models
 *.pth
 
-# Output model histories
-*_history.json
-
 # Python gitignore Template bellow
 
 # Byte-compiled / optimized / DLL files
