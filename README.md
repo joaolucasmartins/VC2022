@@ -1,6 +1,6 @@
 # VC2022
 
-A simple traffic sign detection and classification project that uses classic Image Processing methods. Deveped in the context of the C.U. V.C.
+A simple traffic sign detection and classification project that uses classic Image Processing methods. Developed in the context of the C.U. V.C.
 
 ## Code
 
