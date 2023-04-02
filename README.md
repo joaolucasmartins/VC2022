@@ -12,7 +12,7 @@ process.
 
 ## Images
 
-The used dataset can be found in kaggle
+The used dataset can be found in Kaggle
 [Here](https://www.kaggle.com/datasets/andrewmvd/road-sign-detection). For the
 notebook to run, the dataset must be extracted to the dataset/ directory.
 
