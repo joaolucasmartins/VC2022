@@ -17,4 +17,4 @@ The used dataset can be found in Kaggle
 notebook to run, the dataset must be extracted to the dataset/ directory.
 
 Any extra images need to be placed within the dataset/images/ directory, and the
-notebook function evaluateImage must be called with the desired image name
+notebook function `evaluateImage` must be called with the desired image name
