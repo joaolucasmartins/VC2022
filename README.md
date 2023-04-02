@@ -5,7 +5,7 @@ Image Processing methods. Developed in the context of the C.U. V.C.
 
 ## Code
 
-The frs.py is a fast radial symetry implementation in python, found
+The frs.py is a fast radial symmetry implementation in python, found
 [here](https://github.com/ChristianGutowski/frst_python), which was adapted by
 the group to serve our needs. The notebook contains the entire identification
 process.
